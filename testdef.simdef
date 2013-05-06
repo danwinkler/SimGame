@@ -1,0 +1,26 @@
+stock:
+	name: money
+	start: 100
+	
+agent: 
+	name: building
+	positioning: xy
+	create: true
+	stock:
+		name: personspawn
+	ontick:
+		formula: personspawn = personspawn + 1
+		if: 
+			case: personspawn > 100
+			then:
+				formula: personspawn = 0
+				newagent:
+					type: person
+					
+agent:
+	name: person
+	positioning: xy
+
+
+
+	
