@@ -7,6 +7,7 @@ public class SimElement
 {
 	SimElement parent;
 	String name;
+	private String fullname;
 	
 	HashMap<String, SimElement> children = new HashMap<String, SimElement>();
 	ArrayList<Action> ontick = new ArrayList<Action>();
@@ -41,5 +42,29 @@ public class SimElement
 		}
 		
 		return ret;
+	}
+	
+	public String getFullName()
+	{
+		if( fullname != null ) return fullname;
+		
+		if( parent != null )
+		{
+			String parentname = parent.getFullName();
+			if( !parentname.equals( "" ) )
+			{
+				fullname = parentname + "." + name;
+			}
+			else
+			{
+				fullname = name;
+			}
+		}
+		else 
+		{
+			fullname = name;
+		}
+		
+		return fullname;
 	}
 }

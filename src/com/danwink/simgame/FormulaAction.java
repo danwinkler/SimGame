@@ -9,20 +9,18 @@ import org.boris.expr.util.SimpleEvaluationContext;
 
 public class FormulaAction extends Action
 {
-	SimElement parent;
 	Stock assignee;
 	String formula;
 	
 	ArrayList<String> vars = new ArrayList<String>();
 	
-	public FormulaAction( SimElement parent, String formula )
+	public FormulaAction( String formula )
 	{
-		this.parent = parent;
 		String[] parts = formula.split( "=" );
-		assignee = parent.getStock( parts[0].trim().toLowerCase() );
+		assignee = (Stock)Sim.sim.allElements.get( parts[0].trim().toLowerCase() );
 		this.formula = parts[1].trim().toLowerCase();
 		
-		String[] variables = formula.split( "[^a-zA-Z0-9]+" );
+		String[] variables = formula.split( "[^a-zA-Z0-9.]+" );
 		for( String v : variables )
 		{
 			if( !v.substring( 0, 1 ).matches( "[0-9]" ) )
@@ -40,7 +38,17 @@ public class FormulaAction extends Action
 			
 			for( String v : vars )
 			{
-				c.setVariable( v, ExprParser.parse( "" + parent.getStock( v ).amount ) );
+				SimElement se = Sim.sim.allElements.get( v );
+				if( se instanceof Stock )
+				{
+					Stock s = (Stock)se;
+					c.setVariable( v, ExprParser.parse( "" + s.amount ) );
+				}
+				else if( se instanceof Agent )
+				{
+					Agent a = (Agent)se;
+					c.setVariable( v, ExprParser.parse( "" + a.agents.size() ) );
+				}
 			}
 			
 			Expr exp = ExprParser.parse( formula );
@@ -52,7 +60,7 @@ public class FormulaAction extends Action
 			assignee.amount = Float.parseFloat( exp.toString() );
 		} catch( Exception ex )
 		{
-			
+			ex.printStackTrace();
 		}
 	}
 }

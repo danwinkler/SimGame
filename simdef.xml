@@ -6,9 +6,9 @@
 	<agent name="building" positioning="xy">
 		<stock name="personspawn"></stock>
 		<ontick>
-			<formula>personspawn = personspawn + 1</formula>
-			<if case="personspawn > 100">
-				<formula>personspawn=0</formula>
+			<formula>building.personspawn = building.personspawn + 1</formula>
+			<if case="building.personspawn > 100">
+				<formula>building.personspawn=0</formula>
 				<newagent type="person"></newagent>
 			</if>
 		</ontick>
@@ -16,12 +16,12 @@
 		
 	<agent name="person" positioning="xy"></agent>
 	
-	<button name="New Building">
-		<onclick>
+	<button name="newbuildingbutton">
+		<buildmode agent="building">
 			<if case="money >= 100">
 				<formula>money = money - 100</formula>
 				<newagent type="building"></newagent>
 			</if>
-		</onclick>
+		</buildmode>
 	</button>
 </definition>

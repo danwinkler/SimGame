@@ -2,6 +2,8 @@ package com.danwink.simgame;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import org.dom4j.Document;
@@ -14,8 +16,16 @@ import com.phyloa.dlib.util.DFile;
 
 public class Sim extends SimElement
 {
+	static Sim sim;
+	
+	HashMap<String, SimElement> allElements = new HashMap<String, SimElement>();
+	
+	BuildMode bm;
+	
 	public Sim( String deffile )
 	{
+		name = "";
+		Sim.sim = this;
 		try
 		{
 			loadDefinition( deffile );
@@ -61,16 +71,7 @@ public class Sim extends SimElement
 	
 	void addOnTickDef( SimElement parent, Element n )
 	{
-		Iterator<Element> i = n.elementIterator();
-		while( i.hasNext() )
-		{
-			Element child = i.next();
-			String name = child.getName();
-			if( "formula".equals( name ) )
-			{
-				parent.ontick.add( new FormulaAction( parent, child.getText() ) );
-			}
-		}
+		parent.ontick.addAll( processActions( n ) );
 	}
 	
 	void addAgentDef( SimElement parent, Element n )
@@ -79,6 +80,9 @@ public class Sim extends SimElement
 		a.name = n.attributeValue( "name" );
 		a.parent = parent;
 		parent.children.put( a.name, a );
+		
+		allElements.put( a.getFullName(), a );
+		
 		Iterator<Element> i = n.elementIterator();
 		while( i.hasNext() )
 		{
@@ -92,12 +96,45 @@ public class Sim extends SimElement
 		Button b = new Button();
 		b.name = n.attributeValue( "name" );
 		b.parent = parent;
+		
+		allElements.put( b.getFullName(), b );
+		
+		ArrayList<Action> actions = processActions( n );
+		b.onClick.addAll( actions );
+	}
+	
+	ConditionalAction buildCAction( Element n )
+	{
+		ConditionalAction ca = new ConditionalAction( n.attributeValue( "case" ) );
+		ArrayList<Action> actions = processActions( n );
+		ca.actions.addAll( actions );
+		return ca;
+	}
+	
+	ArrayList<Action> processActions( Element n )
+	{
+		ArrayList<Action> actions = new ArrayList<Action>();
 		Iterator<Element> i = n.elementIterator();
 		while( i.hasNext() )
 		{
-			Element c = i.next();
-			loadElement( b, c );
+			Element child = i.next();
+			String name = child.getName();
+			if( "buildmode".equals( name ) )
+			{
+				BuildMode bm = new BuildMode((Agent)allElements.get( child.attributeValue( "agent" ) ) );
+				bm.actions.addAll( processActions( child ) );
+				actions.add( bm );
+			}
+			else if( "if".equals( name ) )
+			{
+				actions.add( buildCAction( child ) );
+			}
+			else if( "formula".equals( name ) )
+			{
+				actions.add( new FormulaAction( child.getText() ) );
+			}
 		}
+		return actions;
 	}
 	
 	void addStockDef( SimElement parent, Element n )
@@ -108,6 +145,9 @@ public class Sim extends SimElement
 		if( n.attribute( "start" ) != null )
 			s.amount = Float.parseFloat( n.attributeValue( "start" ) );
 		parent.children.put( s.name, s );
+		
+		allElements.put( s.getFullName(), s );
+		
 		Iterator<Element> i = n.elementIterator();
 		while( i.hasNext() )
 		{
